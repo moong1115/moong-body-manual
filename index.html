@@ -9,7 +9,7 @@
 <nav class="nav" id="mainNav">
 <div class="navGroup open" data-group="body"><button type="button" class="groupBtn">🧍 몸 상태 <span>⌄</span></button><div class="subnav"><button type="button" class="active" data-tab="home">몸 설명서</button><button type="button" data-tab="bodymap">몸 지도</button><button type="button" data-tab="mood">무드</button></div></div>
 <div class="navGroup" data-group="record"><button type="button" class="groupBtn">📝 기록 <span>⌄</span></button><div class="subnav"><button type="button" data-tab="pain">통증 기록</button><button type="button" data-tab="pilates">필라테스 기록</button><button type="button" data-tab="calendar">캘린더</button><button type="button" data-tab="meds">약 복용</button><button type="button" data-tab="inbody">인바디</button></div></div>
-<div class="navGroup" data-group="analysis"><button type="button" class="groupBtn">📊 분석 <span>⌄</span></button><div class="subnav"><button type="button" data-tab="analysis">V2 분석</button><button type="button" data-tab="painanalysis">통증 분석</button><button type="button" data-tab="pilatesanalysis">필라테스 분석</button><button type="button" data-tab="stats">통계</button></div></div>
+<div class="navGroup" data-group="analysis"><button type="button" class="groupBtn">📊 분석 <span>⌄</span></button><div class="subnav"><button type="button" data-tab="painanalysis">통증 분석</button><button type="button" data-tab="pilatesanalysis">필라테스 분석</button><button type="button" data-tab="stats">통계</button></div></div>
 <div class="navGroup" data-group="exercise"><button type="button" class="groupBtn">🏃 운동 <span>⌄</span></button><div class="subnav"><button type="button" data-tab="routine">20분 루틴</button><button type="button" data-tab="library">운동 라이브러리</button></div></div>
 </nav>
 <main>
@@ -39,12 +39,7 @@
 <div class="card"><h2>🧠 기록 기반 분석</h2><div id="aiSummary" class="cue">인바디 기록을 2개 이상 저장하면 변화량을 요약합니다.</div><p class="note">자동 요약은 입력된 수치의 변화만 설명하며 의료적 판단이나 진단이 아닙니다.</p></div>
 </section>
 
-<section id="analysis" class="section">
-<div class="card"><h2>🧠 V2 몸 상태 분석</h2><p class="note">기존 통증·필라테스·통계 메뉴와 겹치지 않도록 여러 기록 사이의 <b>연결 패턴</b>만 요약합니다.</p><div id="v2Pattern" class="cue">기록을 모으면 여러 기록 사이의 연결 패턴을 분석합니다.</div></div>
-<div class="card"><h2>🔗 기록 간 연결 패턴</h2><div id="v2Connections" class="note">기록을 분석하고 있습니다.</div></div>
-<div class="card"><h2>📅 변화 흐름</h2><div id="v2Trend" class="note">날짜별 기록이 쌓이면 변화 흐름을 보여줍니다.</div></div>
-<div class="card"><h2>🧭 다음 기록에서 볼 포인트</h2><div id="v2Next" class="note">기록을 추가하면 관찰 포인트를 제안합니다.</div></div>
-</section>
+
 <section id="bodymap" class="section">
 <div class="card"><h2>🧍 V3 클릭형 몸 지도</h2><p class="note">부위를 선택하면 해당 부위의 최근 통증 기록을 바로 확인합니다.</p>
 <div class="v3body"><div class="body3d" id="body3d"><h3 id="bodySide">앞면</h3>
@@ -81,6 +76,9 @@
 <div class="card"><h2>📊 몸 상태 통계 리포트</h2><p class="note">현재까지 입력된 통증·필라테스·몸 메모를 바탕으로 자동 집계합니다. 기록이 추가되면 이 리포트도 함께 갱신됩니다.</p>
 <div class="grid3"><div class="stat"><span class="note">통증 기록</span><b id="painCount">0회</b></div><div class="stat"><span class="note">필라테스</span><b id="pilCount">0회</b></div><div class="stat"><span class="note">몸 메모</span><b id="bodyNoteCount">0건</b></div></div></div>
 <div class="card"><h2>📈 기록 요약</h2><div id="statsSummary" class="cue">기록을 분석하고 있습니다.</div></div>
+<div class="card"><h2>🔗 기록 간 연결 패턴</h2><div id="statsConnections" class="note">기록을 분석하고 있습니다.</div></div>
+<div class="card"><h2>📅 변화 흐름</h2><div id="statsTrend" class="note">날짜별 기록이 쌓이면 변화 흐름을 보여줍니다.</div></div>
+<div class="card"><h2>🧭 다음 기록에서 볼 포인트</h2><div id="statsNext" class="note">기록을 추가하면 관찰 포인트를 제안합니다.</div></div>
 <div class="card"><h2>🧘 필라테스 교정 주제 분포</h2><div id="pilStatsBreakdown" class="note">기록이 없습니다.</div></div>
 <div class="card"><h2>📍 통증 부위 분포</h2><div id="painStatsBreakdown" class="note">기록이 없습니다.</div></div>
 <div class="card"><h2>🧩 반복적으로 등장한 몸 상태 키워드</h2><div id="bodyStatsKeywords" class="note">기록을 분석하고 있습니다.</div></div>
@@ -149,39 +147,17 @@ $('#savePil').onclick=()=>{let a=get('moong_pilates',[]);a.push({date:$('#pilDat
 $('#calDate').onchange=renderDay;
 function renderPain(){let a=get('moong_pain',[]);$('#painCount').textContent=a.length+'회';$('#painList').innerHTML=a.slice().reverse().map(x=>'<div class="listitem"><b>'+x.date+' · '+x.area+' · '+x.score+'/10</b><br><span class="pill">'+x.type+'</span><br><span class="note">'+(x.note||'메모 없음')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
 function renderPil(){let a=get('moong_pilates',[]);$('#pilCount').textContent=a.length+'회';$('#pilList').innerHTML=a.slice().reverse().map(x=>'<div class="listitem"><b>'+x.date+' · '+(x.move||'수업')</b><br><span class="note">큐: '+(x.cue||'-')+'<br>메모: '+(x.note||'-')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
-function renderMeds(){let a=get('moong_meds',[]),d=today();$('#medList').innerHTML=a.map((m,i)=>'<div class="listitem"><b>'+m.name+'</b> · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+i+'" '+(m.taken===d?'checked':'')+'> 오늘 복용</label> <button class="btn secondary del" data-i="'+i+'">삭제</button></div>').join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('.medcheck').forEach(()=>{});document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked?d:null;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});$('#medRate').textContent=a.length?Math.round(a.filter(x=>x.taken===d).length/a.length*100)+'%':'0%'}
+function renderMeds(){let a=get('moong_meds',[]),d=today();$('#medList').innerHTML=a.map((m,i)=>'<div class="listitem"><b>'+m.name+'</b> · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+i+'" '+(m.taken===d?'checked':'')+'> 오늘 복용</label> <button class="btn secondary del" data-i="'+i+'">삭제</button></div>').join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('.medcheck').forEach(()=>{});document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked?d:null;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});}
 $('#addMed').onclick=()=>{let n=$('#medName').value.trim();if(!n)return;let a=get('moong_meds',[]);a.push({name:n,time:$('#medTime').value,taken:null});set('moong_meds',a);$('#medName').value='';render()};
 function renderDay(){let d=$('#calDate').value||today(),p=get('moong_pain',[]).filter(x=>x.date===d),q=get('moong_pilates',[]).filter(x=>x.date===d);$('#daySummary').innerHTML='<b>'+d+'</b><br>통증 '+p.length+'건 · 필라테스 '+q.length+'건'+(p.length?'<hr>'+p.map(x=>x.area+' '+(x.score==null?'-':x.score+'/10')+' · '+x.type).join('<br>'):'')+(q.length?'<hr>'+q.map(x=>(x.move||'수업')+' · '+(x.cue||'큐 없음')).join('<br>'):'')}
 
-function renderV2(){
-  const pain=get('moong_pain',[]), pil=get('moong_pilates',[]), notes=get('moong_body_notes',[]);
-  const all=pil.map(x=>(x.move||'')+' '+(x.cue||'')+' '+(x.note||'')).join(' ')+' '+notes.map(x=>x.text||'').join(' ');
-  const left=/(왼쪽.*(골반|엉덩이|갈비|옆구리)|갈비.*확장)/.test(all), right=/(오른쪽.*(어깨|팔)|승모)/.test(all), pelvis=/골반|엉덩이|코어|아랫배/.test(all);
-  const painAreas=[...new Set(pain.map(x=>x.area).filter(Boolean))];
-  if(!pain.length&&!pil.length&&!notes.length){$('#v2Pattern').textContent='기록이 쌓이면 여러 기록 사이의 연결 패턴을 분석합니다.';$('#v2Connections').textContent='분석할 기록이 없습니다.';$('#v2Trend').textContent='날짜별 기록이 쌓이면 변화 흐름을 보여줍니다.';$('#v2Next').textContent='기록을 추가하면 관찰 포인트를 제안합니다.';return}
-  const connection=[];
-  if(left&&pelvis) connection.push('왼쪽 골반·엉덩이 안정화와 왼쪽 갈비/옆구리 사용에 관한 메모가 함께 반복됩니다.');
-  if(right) connection.push('오른쪽 어깨·승모 사용에 관한 메모가 다른 자세 교정 기록과 연결되어 있습니다.');
-  if(painAreas.length) connection.push('통증 기록 부위와 자세·운동 기록을 함께 비교할 수 있습니다: '+painAreas.join(', ')+'.');
-  $('#v2Connections').innerHTML=connection.length?connection.map(x=>'<div class="cue">'+x+'</div>').join(''):'현재 기록만으로 뚜렷한 연결 패턴은 아직 없습니다.';
-  const dates=[...new Set([...pain,...pil,...notes].map(x=>x.date).filter(Boolean))].sort();
-  $('#v2Trend').innerHTML=dates.length?'<b>'+dates[0]+'</b>부터 <b>'+dates[dates.length-1]+'</b>까지 '+dates.length+'개 날짜에 기록이 있습니다.':'날짜 정보가 없습니다.';
-  const next=[];
-  if(left||pelvis) next.push('왼쪽 골반·엉덩이와 갈비/옆구리의 느낌을 같은 날짜에 함께 기록하기');
-  if(right) next.push('오른쪽 어깨·승모의 사용감과 통증 여부를 같은 날짜에 함께 기록하기');
-  if(!pain.some(x=>Number.isFinite(Number(x.score)))) next.push('통증이 있을 때 0–10 강도를 함께 기록하기');
-  $('#v2Next').innerHTML=next.length?next.map(x=>'• '+x).join('<br>'):'현재 기록을 유지하며 날짜별 변화를 관찰하기';
-  $('#v2Pattern').innerHTML='<b>현재까지의 연결 패턴</b><br>'+(
-    connection.length?'개별 기록을 다시 나열하지 않고 서로 다른 기록에서 함께 나타나는 내용만 정리합니다.':'현재 기록이 더 쌓이면 기록 간 연결 패턴을 확인할 수 있습니다.'
-  );
-}
 function renderV3(){
   const pain=get('moong_pain',[]), pil=get('moong_pilates',[]);
   const areaCounts={}; pain.forEach(x=>{const k=x.area||'기타';areaCounts[k]=(areaCounts[k]||0)+1});
   const scores=pain.map(x=>+x.score).filter(x=>!Number.isNaN(x));
   const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
   $('#v3PainStats').innerHTML='<div class="grid3"><div class="stat"><span class="note">총 통증 기록</span><b>'+pain.length+'회</b></div><div class="stat"><span class="note">평균 강도</span><b>'+avg+'/10</b></div><div class="stat"><span class="note">주요 부위</span><b>'+((Object.entries(areaCounts).sort((a,b)=>b[1]-a[1])[0]||['-'])[0])+'</b></div></div>';
-  $('#v3PainFlow').innerHTML=pain.length?pain.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.area||'기타')+' · '+x.score+'/10<br><span class="note">'+(x.type||'-')+' · '+(x.note||'-')+'</span></div>').join(''):'통증 기록이 없습니다.';
+  $('#v3PainFlow').innerHTML=pain.length?pain.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.area||'기타')+' · '+(x.score==null?'강도 미기록':x.score+'/10)<br><span class="note">'+(x.type||'-')+' · '+(x.note||'-')+'</span></div>').join(''):'통증 기록이 없습니다.';
   const moves={};pil.forEach(x=>{const k=x.move||'수업';moves[k]=(moves[k]||0)+1});
   $('#v3PilStats').innerHTML='<div class="grid"><div class="stat"><span class="note">총 필라테스 기록</span><b>'+pil.length+'회</b></div><div class="stat"><span class="note">가장 많이 기록된 동작</span><b>'+((Object.entries(moves).sort((a,b)=>b[1]-a[1])[0]||['-'])[0])+'</b></div></div>';
   $('#v3PilFlow').innerHTML=pil.length?pil.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.move||'수업')+'<br><span class="note">큐: '+(x.cue||'-')+'<br>느낌: '+(x.note||'-')+'</span></div>').join(''):'필라테스 기록이 없습니다.';
@@ -235,7 +211,30 @@ function renderStats(){
   report+='<br>• 몸 메모 '+notes.length+'건과 필라테스 '+pil.length+'건을 기준으로 자동 집계한 기록 리포트입니다.';
   $('#statsSummary').innerHTML=report;
   $('#bodyStatsReport').innerHTML=report+'<br><br><b>관찰 포인트</b><br>① 왼쪽 골반·엉덩이 안정화 ② 왼쪽 갈비/옆구리 확장 ③ 오른쪽 어깨·승모 사용 조절 ④ 전방경사 16° 기록을 장기 추세로 함께 관찰합니다.';
+
+  // V2 분석 내용을 통계 페이지에 통합: 기존 통계와 중복되지 않게 기록 간 연결·변화 흐름·다음 관찰 포인트만 계산합니다.
+  const allText=pil.map(x=>(x.move||'')+' '+(x.cue||'')+' '+(x.note||'')).join(' ')+' '+notes.map(x=>x.text||'').join(' ');
+  const left=/(왼쪽.*(골반|엉덩이|갈비|옆구리)|갈비.*확장)/.test(allText);
+  const right=/(오른쪽.*(어깨|팔)|승모)/.test(allText);
+  const pelvis=/골반|엉덩이|코어|아랫배/.test(allText);
+  const painAreas=[...new Set(pain.map(x=>x.area).filter(Boolean))];
+  const connection=[];
+  if(left&&pelvis) connection.push('왼쪽 골반·엉덩이 안정화와 왼쪽 갈비/옆구리 사용에 관한 메모가 함께 반복됩니다.');
+  if(right) connection.push('오른쪽 어깨·승모 사용에 관한 메모가 다른 자세 교정 기록과 연결되어 있습니다.');
+  if(painAreas.length) connection.push('통증 기록 부위와 자세·운동 기록을 함께 비교할 수 있습니다: '+painAreas.join(', ')+'.');
+  $('#statsConnections').innerHTML=connection.length?connection.map(x=>'<div class="cue">'+x+'</div>').join(''):'현재 기록만으로 뚜렷한 연결 패턴은 아직 없습니다.';
+
+  const dates=[...new Set([...pain,...pil,...notes].map(x=>x.date).filter(Boolean))].sort();
+  $('#statsTrend').innerHTML=dates.length
+    ? '<b>'+dates[0]+'</b>부터 <b>'+dates[dates.length-1]+'</b>까지 '+dates.length+'개 날짜에 기록이 있습니다.'
+    : '날짜별 기록이 쌓이면 변화 흐름을 보여줍니다.';
+
+  const next=[];
+  if(left||pelvis) next.push('왼쪽 골반·엉덩이와 갈비/옆구리의 느낌을 같은 날짜에 함께 기록하기');
+  if(right) next.push('오른쪽 어깨·승모의 사용감과 통증 여부를 같은 날짜에 함께 기록하기');
+  if(!scores.length) next.push('통증이 있을 때 0–10 강도를 함께 기록하기');
+  $('#statsNext').innerHTML=next.length?next.map(x=>'• '+x).join('<br>'):'현재 기록을 유지하며 날짜별 변화를 관찰하기';
 }
 
-function render(){renderPain();renderPil();renderMeds();renderDay();drawIb();renderV2();renderV3();renderBodyNotes();renderStats()}render();
+function render(){renderPain();renderPil();renderMeds();renderDay();drawIb();renderV3();renderBodyNotes();renderStats()}render();
 </script></body></html>
