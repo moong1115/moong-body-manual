@@ -39,8 +39,8 @@
 <p class="note">지금까지 입력한 통증·필라테스·인바디 기록을 바탕으로 반복 패턴을 자동으로 정리합니다.</p>
 <div id="v2Pattern" class="cue">기록을 모으면 패턴을 분석합니다.</div>
 </div>
-<div class="card"><h2>📍 통증 패턴</h2><div id="v2PainPattern" class="note">통증 기록이 없습니다.</div></div>
-<div class="card"><h2>🧘 필라테스 타임라인</h2><div id="v2PilTimeline" class="note">필라테스 기록이 없습니다.</div></div>
+<div class="card"><h2>📍 통증 패턴 + 통증 기록</h2><div id="v2PainPattern" class="note">통증 기록이 없습니다.</div><div id="v2PainRecords"></div></div>
+<div class="card"><h2>🧘 필라테스 타임라인 + 필라테스 기록</h2><div id="v2PilTimeline" class="note">필라테스 기록이 없습니다.</div><div id="v2PilRecords"></div></div>
 <div class="card"><h2>🎬 20분 루틴 라이브러리</h2>
 <div class="grid">
 <div class="stat"><b>90/90 호흡</b><span class="note">5분 · 호흡/골반 정렬</span></div>
@@ -88,9 +88,15 @@ function renderV2(){
   $('#v2PainPattern').innerHTML=ranked.length
     ? ranked.slice(0,5).map(x=>'<div class="listitem"><b>'+x[0]+'</b> · '+x[1]+'회</div>').join('')
     : '통증 기록이 없습니다.';
+  $('#v2PainRecords').innerHTML=pain.length
+    ? pain.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.area||'기타')+' · '+(x.type||'-')+' · '+x.score+'/10<br><span class="note">'+(x.note||'-')+'</span></div>').join('')
+    : '';
   $('#v2PilTimeline').innerHTML=pil.length
     ? pil.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.move||'수업')+'<br><span class="note">큐: '+(x.cue||'-')+' · '+(x.note||'-')+'</span></div>').join('')
     : '필라테스 기록이 없습니다.';
+  $('#v2PilRecords').innerHTML=pil.length
+    ? pil.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.move||'수업')+' · '+(x.cue||'-')+'<br><span class="note">'+(x.note||'-')+'</span></div>').join('')
+    : '';
   if(!pain.length && !pil.length){$('#v2Pattern').innerHTML='통증 또는 필라테스 기록을 추가하면 반복되는 부위와 활동 흐름을 보여줍니다.';return}
   const top=ranked[0], recent=pain.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
   $('#v2Pattern').innerHTML=top
