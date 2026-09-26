@@ -24,7 +24,8 @@
 <label>날짜<input id="painDate" type="date"></label>
 <label>부위<select id="painArea"><option>목</option><option>어깨</option><option>왼쪽 골반</option><option>허리</option><option>등</option><option>무릎</option><option value="기타">기타</option></select></label>
 <input id="painAreaOther" placeholder="기타 부위 직접 입력" style="display:none">
-<label>통증 종류<select id="painType"><option>뻐근함</option><option>당김</option><option>찌름</option><option>압박감</option><option>저림</option><option>화끈거림</option><option>둔한 통증</option><option>기타</option></select></label>
+<label>통증 종류<select id="painType"><option>뻐근함</option><option>당김</option><option>찌름</option><option>압박감</option><option>저림</option><option>화끈거림</option><option>둔한 통증</option><option value="기타">기타</option></select></label>
+<input id="painTypeOther" placeholder="기타 통증 종류 직접 입력" style="display:none">
 <label>강도 <span id="painValue">0</span>/10<input id="painScore" type="range" min="0" max="10" value="0"></label>
 <textarea id="painNote" placeholder="상황·동작·자세·느낌 메모"></textarea><button class="btn" id="savePain">통증 저장</button>
 </div></div><div class="card"><h2>최근 기록</h2><div id="painList" class="note">기록이 없습니다.</div></div></section>
@@ -152,7 +153,8 @@ $('#saveIb').onclick=()=>{let a=get('moong_inbody',[]);a.push({date:$('#ibDate')
 function showTab(id){document.querySelectorAll('.nav .subnav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.navGroup').forEach(function(g){g.classList.toggle('hasActive',!!g.querySelector('.subnav button[data-tab="'+id+'"]'))});window.scrollTo(0,0)}
 $('#painScore').oninput=e=>$('#painValue').textContent=e.target.value;
 $('#painArea').onchange=e=>$('#painAreaOther').style.display=e.target.value==='기타'?'block':'none';
-$('#savePain').onclick=()=>{let a=get('moong_pain',[]);a.push({date:$('#painDate').value||today(),area:$('#painArea').value==='기타'?$('#painAreaOther').value:$('#painArea').value,type:$('#painType').value,score:+$('#painScore').value,note:$('#painNote').value.trim()});set('moong_pain',a);$('#painNote').value='';render()};
+$('#painType').onchange=e=>$('#painTypeOther').style.display=e.target.value==='기타'?'block':'none';
+$('#savePain').onclick=()=>{let a=get('moong_pain',[]);a.push({date:$('#painDate').value||today(),area:$('#painArea').value==='기타'?$('#painAreaOther').value:$('#painArea').value,type:$('#painType').value==='기타'?$('#painTypeOther').value:$('#painType').value,score:+$('#painScore').value,note:$('#painNote').value.trim()});set('moong_pain',a);$('#painNote').value='';render()};
 $('#savePil').onclick=()=>{let a=get('moong_pilates',[]);a.push({date:$('#pilDate').value||today(),move:$('#pilMove').value.trim(),cue:$('#pilCue').value.trim(),note:$('#pilNote').value.trim()});set('moong_pilates',a);$('#pilMove').value='';$('#pilCue').value='';$('#pilNote').value='';render()};
 $('#calDate').onchange=renderDay;
 function renderPain(){let a=get('moong_pain',[]);$('#painCount').textContent=a.length+'회';$('#painList').innerHTML=a.slice().reverse().map(x=>'<div class="listitem"><b>'+x.date+' · '+x.area+' · '+x.score+'/10</b><br><span class="pill">'+x.type+'</span><br><span class="note">'+(x.note||'메모 없음')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
