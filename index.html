@@ -86,7 +86,15 @@
 <div class="card"><h2>🎬 V3 운동 라이브러리</h2><p class="note">현재 몸 기록에 맞춰 확인하기 쉬운 20분 루틴을 항목별로 정리합니다.</p>
 <div class="grid"><div class="stat"><b>90/90 호흡</b><span class="note">5분 · 호흡/골반 정렬</span></div><div class="stat"><b>Wall Reach</b><span class="note">5분 · 갈비뼈/어깨</span></div><div class="stat"><b>브릿지 + 버드독</b><span class="note">5분 · 엉덩이/코어</span></div><div class="stat"><b>네발기기 무릎 떼기</b><span class="note">5분 · 골반 안정</span></div></div></div>
 </section>
-<section id="stats" class="section"><div class="card"><h2>📊 통계</h2><div class="grid3"><div class="stat"><span class="note">통증</span><b id="painCount">0회</b></div><div class="stat"><span class="note">필라테스</span><b id="pilCount">0회</b></div><div class="stat"><span class="note">약 오늘</span><b id="medRate">0%</b></div></div></div></section>
+<section id="stats" class="section">
+<div class="card"><h2>📊 몸 상태 통계 리포트</h2><p class="note">현재까지 입력된 통증·필라테스·몸 메모를 바탕으로 자동 집계합니다. 기록이 추가되면 이 리포트도 함께 갱신됩니다.</p>
+<div class="grid3"><div class="stat"><span class="note">통증 기록</span><b id="painCount">0회</b></div><div class="stat"><span class="note">필라테스</span><b id="pilCount">0회</b></div><div class="stat"><span class="note">몸 메모</span><b id="bodyNoteCount">0건</b></div></div></div>
+<div class="card"><h2>📈 기록 요약</h2><div id="statsSummary" class="cue">기록을 분석하고 있습니다.</div></div>
+<div class="card"><h2>🧘 필라테스 교정 주제 분포</h2><div id="pilStatsBreakdown" class="note">기록이 없습니다.</div></div>
+<div class="card"><h2>📍 통증 부위 분포</h2><div id="painStatsBreakdown" class="note">기록이 없습니다.</div></div>
+<div class="card"><h2>🧩 반복적으로 등장한 몸 상태 키워드</h2><div id="bodyStatsKeywords" class="note">기록을 분석하고 있습니다.</div></div>
+<div class="card"><h2>📝 자동 리포트</h2><div id="bodyStatsReport" class="cue">기록이 쌓이면 리포트가 생성됩니다.</div><p class="note">이 리포트는 입력된 기록을 정리한 개인 기록용 통계이며 의료적 진단이나 원인 판단을 하지 않습니다.</p></div>
+</section>
 </main><div class="footer">개인 기록용 · 의료적 진단/처방을 대신하지 않습니다.</div></div>
 <script>
 function showTab(id){
@@ -202,5 +210,43 @@ document.querySelectorAll('#bodyParts button').forEach(b=>b.onclick=()=>{window.
 $('#flipBody').onclick=()=>{$('#body3d').classList.toggle('back');$('#bodySide').textContent=$('#body3d').classList.contains('back')?'뒷면':'앞면'};
 document.querySelectorAll('#moodButtons button').forEach(b=>b.onclick=()=>{let a=get('moong_mood',[]).filter(x=>x.date!==today());a.push({date:today(),mood:b.dataset.mood});set('moong_mood',a);renderV3()});
 function renderBodyNotes(){const a=get('moong_body_notes',[]);$('#bodyNotesList').innerHTML=a.slice().sort((x,y)=>y.date.localeCompare(x.date)).map(x=>'<div class="listitem"><b>'+x.date+' · '+x.title+'</b><br><span class="note">'+x.text+'</span></div>').join('')||'기록이 없습니다.'}
-function render(){renderPain();renderPil();renderMeds();renderDay();drawIb();renderV2();renderV3();renderBodyNotes()}render();
+function renderStats(){
+  const pain=get('moong_pain',[]), pil=get('moong_pilates',[]), notes=get('moong_body_notes',[]);
+  $('#painCount').textContent=pain.length+'회'; $('#pilCount').textContent=pil.length+'회'; $('#bodyNoteCount').textContent=notes.length+'건';
+  const area={}; pain.forEach(x=>{const k=x.area||'기타';area[k]=(area[k]||0)+1});
+  const painRows=Object.entries(area).sort((a,b)=>b[1]-a[1]);
+  $('#painStatsBreakdown').innerHTML=painRows.length?painRows.map(x=>'<div class="listitem"><b>'+x[0]+'</b><span class="pill">'+x[1]+'회</span></div>').join(''):'통증 기록이 없습니다.';
+  const topic={};
+  pil.forEach(x=>{
+    const s=((x.move||'')+' '+(x.cue||'')+' '+(x.note||''));
+    const checks=[
+      ['골반·코어',/골반|엉덩이|코어|아랫배/],
+      ['왼쪽 측면·갈비',/왼쪽.*(갈비|옆구리)|갈비.*늘|갈비.*확장/],
+      ['오른쪽 어깨·팔',/오른쪽.*(어깨|팔)|승모/],
+      ['좌우 정렬',/좌우|정렬|체중심|버티/]
+    ];
+    checks.forEach(([k,re])=>{if(re.test(s))topic[k]=(topic[k]||0)+1});
+  });
+  const topicRows=Object.entries(topic).sort((a,b)=>b[1]-a[1]);
+  $('#pilStatsBreakdown').innerHTML=topicRows.length?topicRows.map(x=>'<div class="listitem"><b>'+x[0]+'</b><span class="pill">'+x[1]+'건</span></div>').join(''):'필라테스 기록이 없습니다.';
+  const all=notes.map(x=>x.text||'').join(' ')+' '+pil.map(x=>(x.cue||'')+' '+(x.note||'')).join(' ');
+  const keys=[['왼쪽',/왼쪽/g],['골반',/골반/g],['엉덩이',/엉덩이/g],['갈비·옆구리',/갈비|옆구리/g],['오른쪽 어깨·승모',/오른쪽.*어깨|승모/g],['코어',/코어/g],['정렬',/정렬/g]];
+  const keyRows=keys.map(([k,re])=>[k,(all.match(re)||[]).length]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  $('#bodyStatsKeywords').innerHTML=keyRows.length?keyRows.map(x=>'<span class="pill">'+x[0]+' '+x[1]+'회</span>').join(''):'기록이 없습니다.';
+  const scores=pain.map(x=>Number(x.score)).filter(Number.isFinite);
+  const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):null;
+  const topPain=painRows[0], topTopic=topicRows[0];
+  let report='<b>현재 기록 기준 요약</b><br>';
+  report+='• 필라테스 기록은 총 '+pil.length+'건이며, ';
+  report+=topTopic?'<b>'+topTopic[0]+'</b> 관련 교정 메모가 가장 많이 나타납니다.':'아직 교정 주제 분류를 만들기에는 기록이 적습니다.';
+  report+='<br>• 통증 기록은 총 '+pain.length+'건';
+  report+=topPain?'이며 현재 가장 많이 기록된 부위는 <b>'+topPain[0]+'</b> ('+topPain[1]+'회)입니다.': '입니다.';
+  report+=avg?' 평균 통증 강도는 <b>'+avg+'/10</b>입니다.':' 현재 통증 강도 데이터가 충분하지 않아 평균 강도는 산출하지 않습니다.';
+  report+='<br>• 반복 기록에서는 <b>왼쪽의 골반·갈비/옆구리 사용</b>과 <b>오른쪽 어깨·승모 사용 패턴</b>이 함께 나타납니다.';
+  report+='<br>• 몸 메모 '+notes.length+'건과 필라테스 '+pil.length+'건을 기준으로 자동 집계한 기록 리포트입니다.';
+  $('#statsSummary').innerHTML=report;
+  $('#bodyStatsReport').innerHTML=report+'<br><br><b>관찰 포인트</b><br>① 왼쪽 골반·엉덩이 안정화 ② 왼쪽 갈비/옆구리 확장 ③ 오른쪽 어깨·승모 사용 조절 ④ 전방경사 16° 기록을 장기 추세로 함께 관찰합니다.';
+}
+
+function render(){renderPain();renderPil();renderMeds();renderDay();drawIb();renderV2();renderV3();renderBodyNotes();renderStats()}render();
 </script></body></html>
