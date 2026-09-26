@@ -7,7 +7,7 @@
 <body><div class="wrap">
 <header class="hero"><div class="eyebrow">🧍 PERSONAL BODY MANUAL · V1</div><h1>MOONG<br>BODY MANUAL</h1><p>통증 · 필라테스 · 운동 · 몸 상태 기록</p></header>
 <nav class="nav">
-<button type="button" class="active" data-tab="home">몸 설명서</button><button type="button" data-tab="routine">20분 루틴</button><button type="button" data-tab="pain">통증 기록</button><button type="button" data-tab="pilates">필라테스</button><button type="button" data-tab="calendar">캘린더</button><button type="button" data-tab="meds">약 복용</button><button type="button" data-tab="inbody">인바디</button><button type="button" data-tab="stats">통계</button>
+<button type="button" class="active" data-tab="home">몸 설명서</button><button type="button" data-tab="routine">20분 루틴</button><button type="button" data-tab="pain">통증 기록</button><button type="button" data-tab="pilates">필라테스</button><button type="button" data-tab="calendar">캘린더</button><button type="button" data-tab="meds">약 복용</button><button type="button" data-tab="inbody">인바디</button><button type="button" data-tab="analysis">V2 분석</button><button type="button" data-tab="stats">통계</button>
 </nav>
 <main>
 <section id="home" class="section active">
@@ -32,6 +32,23 @@
 <div class="form"><input id="ibDate" type="date"><input id="ibWeight" type="number" step="0.1" placeholder="체중 kg"><input id="ibMuscle" type="number" step="0.1" placeholder="골격근량 kg"><input id="ibFat" type="number" step="0.1" placeholder="체지방량 kg"><button class="btn" id="saveIb">인바디 저장</button></div></div>
 <div class="card"><h2>변화 추이</h2><canvas id="ibChart" width="760" height="280" style="width:100%;height:280px;background:#081525;border-radius:14px"></canvas><div id="ibList" class="note" style="margin-top:10px"></div></div>
 <div class="card"><h2>🧠 기록 기반 분석</h2><div id="aiSummary" class="cue">인바디 기록을 2개 이상 저장하면 변화량을 요약합니다.</div><p class="note">자동 요약은 입력된 수치의 변화만 설명하며 의료적 판단이나 진단이 아닙니다.</p></div>
+</section>
+
+<section id="analysis" class="section">
+<div class="card"><h2>🧠 V2 몸 상태 분석</h2>
+<p class="note">지금까지 입력한 통증·필라테스·인바디 기록을 바탕으로 반복 패턴을 자동으로 정리합니다.</p>
+<div id="v2Pattern" class="cue">기록을 모으면 패턴을 분석합니다.</div>
+</div>
+<div class="card"><h2>📍 통증 패턴</h2><div id="v2PainPattern" class="note">통증 기록이 없습니다.</div></div>
+<div class="card"><h2>🧘 필라테스 타임라인</h2><div id="v2PilTimeline" class="note">필라테스 기록이 없습니다.</div></div>
+<div class="card"><h2>🎬 20분 루틴 라이브러리</h2>
+<div class="grid">
+<div class="stat"><b>90/90 호흡</b><span class="note">5분 · 호흡/골반 정렬</span></div>
+<div class="stat"><b>Wall Reach</b><span class="note">5분 · 갈비뼈/어깨</span></div>
+<div class="stat"><b>브릿지 + 버드독</b><span class="note">5분 · 엉덩이/코어</span></div>
+<div class="stat"><b>네발기기 무릎 떼기</b><span class="note">5분 · 골반 안정</span></div>
+</div>
+</div>
 </section>
 <section id="stats" class="section"><div class="card"><h2>📊 통계</h2><div class="grid3"><div class="stat"><span class="note">통증</span><b id="painCount">0회</b></div><div class="stat"><span class="note">필라테스</span><b id="pilCount">0회</b></div><div class="stat"><span class="note">약 오늘</span><b id="medRate">0%</b></div></div></div></section>
 </main><div class="footer">개인 기록용 · 의료적 진단/처방을 대신하지 않습니다.</div></div>
@@ -62,5 +79,24 @@ function renderPil(){let a=get('moong_pilates',[]);$('#pilCount').textContent=a.
 function renderMeds(){let a=get('moong_meds',[]),d=today();$('#medList').innerHTML=a.map((m,i)=>'<div class="listitem"><b>'+m.name+'</b> · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+i+'" '+(m.taken===d?'checked':'')+'> 오늘 복용</label> <button class="btn secondary del" data-i="'+i+'">삭제</button></div>').join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('.medcheck').forEach(()=>{});document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked?d:null;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});$('#medRate').textContent=a.length?Math.round(a.filter(x=>x.taken===d).length/a.length*100)+'%':'0%'}
 $('#addMed').onclick=()=>{let n=$('#medName').value.trim();if(!n)return;let a=get('moong_meds',[]);a.push({name:n,time:$('#medTime').value,taken:null});set('moong_meds',a);$('#medName').value='';render()};
 function renderDay(){let d=$('#calDate').value||today(),p=get('moong_pain',[]).filter(x=>x.date===d),q=get('moong_pilates',[]).filter(x=>x.date===d);$('#daySummary').innerHTML='<b>'+d+'</b><br>통증 '+p.length+'건 · 필라테스 '+q.length+'건'+(p.length?'<hr>'+p.map(x=>x.area+' '+x.score+'/10 · '+x.type).join('<br>'):'')+(q.length?'<hr>'+q.map(x=>(x.move||'수업')+' · '+(x.cue||'큐 없음')).join('<br>'):'')}
-function render(){renderPain();renderPil();renderMeds();renderDay();drawIb()}render();
+
+function renderV2(){
+  const pain=get('moong_pain',[]), pil=get('moong_pilates',[]);
+  const counts={};
+  pain.forEach(x=>{const k=x.area||'기타';counts[k]=(counts[k]||0)+1});
+  const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  $('#v2PainPattern').innerHTML=ranked.length
+    ? ranked.slice(0,5).map(x=>'<div class="listitem"><b>'+x[0]+'</b> · '+x[1]+'회</div>').join('')
+    : '통증 기록이 없습니다.';
+  $('#v2PilTimeline').innerHTML=pil.length
+    ? pil.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.move||'수업')+'<br><span class="note">큐: '+(x.cue||'-')+' · '+(x.note||'-')+'</span></div>').join('')
+    : '필라테스 기록이 없습니다.';
+  if(!pain.length && !pil.length){$('#v2Pattern').innerHTML='통증 또는 필라테스 기록을 추가하면 반복되는 부위와 활동 흐름을 보여줍니다.';return}
+  const top=ranked[0], recent=pain.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+  $('#v2Pattern').innerHTML=top
+    ? '<b>가장 많이 기록된 통증 부위:</b> '+top[0]+' ('+top[1]+'회)'
+      +(recent?' · 최근 통증 '+recent.date+' '+recent.area+' '+recent.score+'/10':'')
+    : '<b>필라테스 기록 '+pil.length+'회</b>가 저장되어 있습니다.';
+}
+function render(){renderPain();renderPil();renderMeds();renderDay();drawIb();renderV2()}render();
 </script></body></html>
