@@ -7,7 +7,7 @@
 <body><div class="wrap">
 <header class="hero"><div class="eyebrow">🧍 PERSONAL BODY MANUAL · V1</div><h1>MOONG<br>BODY MANUAL</h1><p>통증 · 필라테스 · 운동 · 몸 상태 기록</p></header>
 <nav class="nav">
-<button class="active" data-tab="home">몸 설명서</button><button data-tab="routine">20분 루틴</button><button data-tab="pain">통증 기록</button><button data-tab="pilates">필라테스</button><button data-tab="calendar">캘린더</button><button data-tab="meds">약 복용</button><button data-tab="stats">통계</button>
+<button class="active" data-tab="home">몸 설명서</button><button data-tab="routine">20분 루틴</button><button data-tab="pain">통증 기록</button><button data-tab="pilates">필라테스</button><button data-tab="calendar">캘린더</button><button data-tab="meds">약 복용</button><button data-tab="inbody">인바디</button><button data-tab="stats">통계</button>
 </nav>
 <main>
 <section id="home" class="section active">
@@ -27,11 +27,20 @@
 <section id="pilates" class="section"><div class="card"><h2>🧘 필라테스 기록</h2><div class="form"><input id="pilDate" type="date"><input id="pilMove" placeholder="동작 / 수업명"><input id="pilCue" placeholder="선생님 큐 / 핸즈온"><textarea id="pilNote" placeholder="내 몸의 느낌·좌우 차이·주의점"></textarea><button class="btn" id="savePil">필라테스 기록 저장</button></div></div><div class="card"><h2>최근 필라테스 메모</h2><div id="pilList" class="note">기록이 없습니다.</div></div></section>
 <section id="calendar" class="section"><div class="card"><h2>📅 날짜별 기록</h2><input id="calDate" type="date"><div id="daySummary" class="note" style="margin-top:12px">날짜를 선택하세요.</div></div></section>
 <section id="meds" class="section"><div class="card"><h2>💊 약 복용</h2><div class="form"><input id="medName" placeholder="약 이름"><input id="medTime" type="time"><button class="btn" id="addMed">약 추가</button></div></div><div class="card"><div id="medList" class="note">등록된 약이 없습니다.</div></div></section>
+<section id="inbody" class="section">
+<div class="card"><h2>📈 인바디 기록</h2><p class="note">날짜별 체중·골격근량·체지방량을 저장하면 변화 그래프를 확인할 수 있어요.</p>
+<div class="form"><input id="ibDate" type="date"><input id="ibWeight" type="number" step="0.1" placeholder="체중 kg"><input id="ibMuscle" type="number" step="0.1" placeholder="골격근량 kg"><input id="ibFat" type="number" step="0.1" placeholder="체지방량 kg"><button class="btn" id="saveIb">인바디 저장</button></div></div>
+<div class="card"><h2>변화 추이</h2><canvas id="ibChart" width="760" height="280" style="width:100%;height:280px;background:#081525;border-radius:14px"></canvas><div id="ibList" class="note" style="margin-top:10px"></div></div>
+<div class="card"><h2>🧠 기록 기반 분석</h2><div id="aiSummary" class="cue">인바디 기록을 2개 이상 저장하면 변화량을 요약합니다.</div><p class="note">자동 요약은 입력된 수치의 변화만 설명하며 의료적 판단이나 진단이 아닙니다.</p></div>
+</section>
 <section id="stats" class="section"><div class="card"><h2>📊 통계</h2><div class="grid3"><div class="stat"><span class="note">통증</span><b id="painCount">0회</b></div><div class="stat"><span class="note">필라테스</span><b id="pilCount">0회</b></div><div class="stat"><span class="note">약 오늘</span><b id="medRate">0%</b></div></div></div></section>
 </main><div class="footer">개인 기록용 · 의료적 진단/처방을 대신하지 않습니다.</div></div>
 <script>
 const $=s=>document.querySelector(s),today=()=>new Date().toISOString().slice(0,10),get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-['painDate','pilDate','calDate'].forEach(id=>{const e=$('#'+id);if(e)e.value=today()});
+['painDate','pilDate','calDate','ibDate'].forEach(id=>{const e=$('#'+id);if(e)e.value=today()});
+function drawIb(){const a=get('moong_inbody',[]).sort((x,y)=>x.date.localeCompare(y.date)),cv=$('#ibChart');if(!cv)return;const g=cv.getContext('2d'),w=cv.width=cv.clientWidth*2,h=cv.height=280*2;g.scale(2,2);const W=cv.clientWidth,H=280;g.clearRect(0,0,W,H);if(!a.length){g.fillStyle='#9fb0c6';g.fillText('인바디 기록을 추가하세요.',18,30);return}const vals=a.flatMap(x=>[x.weight,x.muscle,x.fat].filter(v=>v!=null));const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;const sx=i=>a.length===1?W/2:20+i*(W-40)/(a.length-1),sy=v=>H-25-(v-min)/range*(H-50);g.strokeStyle='#8ab4ff';g.lineWidth=2;[['weight','체중'],['muscle','골격근'],['fat','체지방']].forEach((z,j)=>{g.beginPath();a.forEach((x,i)=>{if(x[z[0]]==null)return;const X=sx(i),Y=sy(x[z[0]]);i?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke();g.fillStyle='#f6f8fb';g.fillText(z[1],20+j*85,18)});$('#ibList').innerHTML=a.slice().reverse().map(x=>x.date+' · 체중 '+x.weight+'kg · 골격근 '+x.muscle+'kg · 체지방 '+x.fat+'kg').join('<br>');if(a.length>=2){const first=a[0],last=a[a.length-1];const d=(k)=>((last[k]-first[k]).toFixed(1));$('#aiSummary').innerHTML='<b>'+first.date+' → '+last.date+'</b><br>체중 '+d('weight')+'kg · 골격근 '+d('muscle')+'kg · 체지방 '+d('fat')+'kg 변화가 기록되었습니다.'}}
+$('#saveIb').onclick=()=>{let a=get('moong_inbody',[]);a.push({date:$('#ibDate').value||today(),weight:parseFloat($('#ibWeight').value),muscle:parseFloat($('#ibMuscle').value),fat:parseFloat($('#ibFat').value)});a=a.filter(x=>!Number.isNaN(x.weight)&&!Number.isNaN(x.muscle)&&!Number.isNaN(x.fat));set('moong_inbody',a);render();};
+
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active');render()});
 $('#painScore').oninput=e=>$('#painValue').textContent=e.target.value;
 $('#painArea').onchange=e=>$('#painAreaOther').style.display=e.target.value==='기타'?'block':'none';
@@ -43,5 +52,5 @@ function renderPil(){let a=get('moong_pilates',[]);$('#pilCount').textContent=a.
 function renderMeds(){let a=get('moong_meds',[]),d=today();$('#medList').innerHTML=a.map((m,i)=>'<div class="listitem"><b>'+m.name+'</b> · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+i+'" '+(m.taken===d?'checked':'')+'> 오늘 복용</label> <button class="btn secondary del" data-i="'+i+'">삭제</button></div>').join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('.medcheck').forEach(()=>{});document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked?d:null;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});$('#medRate').textContent=a.length?Math.round(a.filter(x=>x.taken===d).length/a.length*100)+'%':'0%'}
 $('#addMed').onclick=()=>{let n=$('#medName').value.trim();if(!n)return;let a=get('moong_meds',[]);a.push({name:n,time:$('#medTime').value,taken:null});set('moong_meds',a);$('#medName').value='';render()};
 function renderDay(){let d=$('#calDate').value||today(),p=get('moong_pain',[]).filter(x=>x.date===d),q=get('moong_pilates',[]).filter(x=>x.date===d);$('#daySummary').innerHTML='<b>'+d+'</b><br>통증 '+p.length+'건 · 필라테스 '+q.length+'건'+(p.length?'<hr>'+p.map(x=>x.area+' '+x.score+'/10 · '+x.type).join('<br>'):'')+(q.length?'<hr>'+q.map(x=>(x.move||'수업')+' · '+(x.cue||'큐 없음')).join('<br>'):'')}
-function render(){renderPain();renderPil();renderMeds();renderDay()}render();
+function render(){renderPain();renderPil();renderMeds();renderDay();drawIb()}render();
 </script></body></html>
