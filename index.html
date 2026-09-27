@@ -95,7 +95,20 @@ function showTab(id){
   document.querySelectorAll('.nav .subnav button').forEach(function(b){b.classList.toggle('active',b.dataset.tab===id)});
   document.querySelectorAll('.section').forEach(function(s){s.classList.toggle('active',s.id===id)});
   document.querySelectorAll('.navGroup').forEach(function(g){g.classList.toggle('hasActive',!!g.querySelector('.subnav button[data-tab="'+id+'"]'))});
+  window.scrollTo(0,0);
 }
+document.querySelectorAll('.navGroup .groupBtn').forEach(function(b){
+  b.onclick=function(e){
+    e.preventDefault();
+    var g=b.closest('.navGroup');
+    document.querySelectorAll('.navGroup').forEach(function(x){if(x!==g)x.classList.remove('open')});
+    g.classList.toggle('open');
+  };
+});
+document.querySelectorAll('.nav .subnav button').forEach(function(b){
+  b.onclick=function(e){e.preventDefault();showTab(b.dataset.tab);};
+});
+showTab('home');
 </script><script>
 const $=s=>document.querySelector(s),today=()=>new Date().toISOString().slice(0,10),get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 function seedPastRecords(){
@@ -150,22 +163,6 @@ const BODY_HISTORY=window.MOONG_HISTORY;
 function drawIb(){const a=get('moong_inbody',[]).sort((x,y)=>x.date.localeCompare(y.date)),cv=$('#ibChart');if(!cv)return;const g=cv.getContext('2d'),w=cv.width=cv.clientWidth*2,h=cv.height=280*2;g.scale(2,2);const W=cv.clientWidth,H=280;g.clearRect(0,0,W,H);if(!a.length){g.fillStyle='#9fb0c6';g.fillText('인바디 기록을 추가하세요.',18,30);return}const vals=a.flatMap(x=>[x.weight,x.muscle,x.fat].filter(v=>v!=null));const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;const sx=i=>a.length===1?W/2:20+i*(W-40)/(a.length-1),sy=v=>H-25-(v-min)/range*(H-50);g.strokeStyle='#8ab4ff';g.lineWidth=2;[['weight','체중'],['muscle','골격근'],['fat','체지방']].forEach((z,j)=>{g.beginPath();a.forEach((x,i)=>{if(x[z[0]]==null)return;const X=sx(i),Y=sy(x[z[0]]);i?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke();g.fillStyle='#f6f8fb';g.fillText(z[1],20+j*85,18)});$('#ibList').innerHTML=a.slice().reverse().map(x=>x.date+' · 체중 '+x.weight+'kg · 골격근 '+x.muscle+'kg · 체지방 '+x.fat+'kg').join('<br>');if(a.length>=2){const first=a[0],last=a[a.length-1];const d=(k)=>((last[k]-first[k]).toFixed(1));$('#aiSummary').innerHTML='<b>'+first.date+' → '+last.date+'</b><br>체중 '+d('weight')+'kg · 골격근 '+d('muscle')+'kg · 체지방 '+d('fat')+'kg 변화가 기록되었습니다.'}}
 $('#saveIb').onclick=()=>{let a=get('moong_inbody',[]);a.push({date:$('#ibDate').value||today(),weight:parseFloat($('#ibWeight').value),muscle:parseFloat($('#ibMuscle').value),fat:parseFloat($('#ibFat').value)});a=a.filter(x=>!Number.isNaN(x.weight)&&!Number.isNaN(x.muscle)&&!Number.isNaN(x.fat));set('moong_inbody',a);render();};
 
-function showTab(id){
-  document.querySelectorAll('.nav .subnav button').forEach(function(x){x.classList.toggle('active',x.dataset.tab===id)});
-  document.querySelectorAll('.section').forEach(function(x){x.classList.toggle('active',x.id===id)});
-  document.querySelectorAll('.navGroup').forEach(function(g){g.classList.toggle('hasActive',!!g.querySelector('.subnav button[data-tab="'+id+'"]'))});
-}
-document.querySelectorAll('.navGroup .groupBtn').forEach(function(b){
-  b.onclick=function(e){
-    e.preventDefault();
-    var g=b.closest('.navGroup');
-    document.querySelectorAll('.navGroup').forEach(function(x){if(x!==g)x.classList.remove('open')});
-    g.classList.toggle('open');
-  };
-});
-document.querySelectorAll('.nav .subnav button').forEach(function(b){
-  b.onclick=function(e){e.preventDefault();showTab(b.dataset.tab);};
-});
 $('#painScore').oninput=e=>$('#painValue').textContent=e.target.value;
 $('#painArea').onchange=e=>$('#painAreaOther').style.display=e.target.value==='기타'?'block':'none';
 $('#painType').onchange=e=>$('#painTypeOther').style.display=e.target.value==='기타'?'block':'none';
@@ -182,7 +179,7 @@ function renderV3(){
   const scores=pain.map(x=>+x.score).filter(x=>!Number.isNaN(x));
   const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
   $('#v3PainStats').innerHTML='<div class="grid3"><div class="stat"><span class="note">총 통증 기록</span><b>'+pain.length+'회</b></div><div class="stat"><span class="note">평균 강도</span><b>'+avg+'/10</b></div><div class="stat"><span class="note">주요 부위</span><b>'+((Object.entries(areaCounts).sort((a,b)=>b[1]-a[1])[0]||['-'])[0])+'</b></div></div>';
-  $('#v3PainFlow').innerHTML=pain.length?pain.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.area||'기타')+' · '+(x.score==null?'강도 미기록':x.score+'/10)<br><span class="note">'+(x.type||'-')+' · '+(x.note||'-')+'</span></div>').join(''):'통증 기록이 없습니다.';
+  $('#v3PainFlow').innerHTML=pain.length?pain.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.area||'기타')+' · '+(x.score==null?'강도 미기록':x.score+'/10')+'<br><span class="note">'+(x.type||'-')+' · '+(x.note||'-')+'</span></div>').join(''):'통증 기록이 없습니다.';
   const moves={};pil.forEach(x=>{const k=x.move||'수업';moves[k]=(moves[k]||0)+1});
   $('#v3PilStats').innerHTML='<div class="grid"><div class="stat"><span class="note">총 필라테스 기록</span><b>'+pil.length+'회</b></div><div class="stat"><span class="note">가장 많이 기록된 동작</span><b>'+((Object.entries(moves).sort((a,b)=>b[1]-a[1])[0]||['-'])[0])+'</b></div></div>';
   $('#v3PilFlow').innerHTML=pil.length?pil.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15).map(x=>'<div class="listitem"><b>'+x.date+'</b> · '+(x.move||'수업')+'<br><span class="note">큐: '+(x.cue||'-')+'<br>느낌: '+(x.note||'-')+'</span></div>').join(''):'필라테스 기록이 없습니다.';
