@@ -169,7 +169,7 @@ function renderPil(){let a=historyMerge('moong_pilates',window.MOONG_HISTORY?.pi
 function renderMeds(){let a=get('moong_meds',[]);$('#medList').innerHTML=a.slice().reverse().map((m,i)=>{const idx=a.length-1-i;return '<div class="listitem"><b>'+m.name+'</b> · '+(m.date||'-')+' · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+idx+'" '+(m.taken?'checked':'')+'> 복용 완료</label> <button class="btn secondary del" data-i="'+idx+'">삭제</button></div>'}).join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});}
 $('#addMed').onclick=()=>{let n=$('#medName').value.trim();if(!n)return;let a=get('moong_meds',[]);a.push({name:n,date:$('#medDate').value||today(),time:$('#medTime').value,taken:false});set('moong_meds',a);$('#medName').value='';render()};
 function renderV3(){
-  const pain=get('moong_pain',[]), pil=get('moong_pilates',[]);
+  const pain=historyMerge('moong_pain',window.MOONG_HISTORY?.pain), pil=historyMerge('moong_pilates',window.MOONG_HISTORY?.pil);
   const areaCounts={}; pain.forEach(x=>{const k=x.area||'기타';areaCounts[k]=(areaCounts[k]||0)+1});
   const scores=pain.map(x=>+x.score).filter(x=>!Number.isNaN(x));
   const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
@@ -193,7 +193,7 @@ $('#flipBody').onclick=()=>{$('#body3d').classList.toggle('back');$('#bodySide')
 document.querySelectorAll('#moodButtons button').forEach(b=>b.onclick=()=>{let a=get('moong_mood',[]).filter(x=>x.date!==today());a.push({date:today(),mood:b.dataset.mood});set('moong_mood',a);renderV3()});
 function renderBodyNotes(){const a=historyMerge('moong_body_notes',window.MOONG_HISTORY?.notes);$('#bodyNotesList').innerHTML=a.slice().sort((x,y)=>y.date.localeCompare(x.date)).map(x=>'<div class="listitem"><b>'+x.date+' · '+x.title+'</b><br><span class="note">'+x.text+'</span></div>').join('')||'기록이 없습니다.'}
 function renderStats(){
-  const pain=get('moong_pain',[]), pil=get('moong_pilates',[]), notes=get('moong_body_notes',[]);
+  const pain=historyMerge('moong_pain',window.MOONG_HISTORY?.pain), pil=historyMerge('moong_pilates',window.MOONG_HISTORY?.pil), notes=historyMerge('moong_body_notes',window.MOONG_HISTORY?.notes);
   $('#painCount').textContent=pain.length+'회'; $('#pilCount').textContent=pil.length+'회'; $('#bodyNoteCount').textContent=notes.length+'건';
   const area={}; pain.forEach(x=>{const k=x.area||'기타';area[k]=(area[k]||0)+1});
   const painRows=Object.entries(area).sort((a,b)=>b[1]-a[1]);
