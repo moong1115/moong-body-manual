@@ -137,16 +137,17 @@ function seedPastRecords(){
     {date:'2026-07-09',title:'왼쪽 측면 사용 큐',text:'왼쪽 측면은 갈비뼈를 최대한 늘리고 확장하는 느낌으로 스트레칭하는 큐를 받음.'}
   ];
 
+  // 과거 기록은 고정 id로 안전하게 병합합니다. 기존 사용자의 기록은 삭제하지 않습니다.
   const merge=(key,items)=>{
     const current=get(key,[]);
-    const sig=x=>JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score]);
+    const sig=x=>x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score]);
     const seen=new Set(current.map(sig));
-    items.forEach(x=>{if(!seen.has(sig(x))){current.push(x);seen.add(sig(x))}});
+    items.forEach(x=>{if(!seen.has(x.id)){current.push(x);seen.add(x.id)}});
     set(key,current);
   };
-  merge(pilKey,pastPil);
-  merge(painKey,pastPain);
-  merge(noteKey,pastNotes);
+  merge(pilKey,pastPil.map((x,i)=>({...x,id:'history-pil-'+(i+1)})));
+  merge(painKey,pastPain.map((x,i)=>({...x,id:'history-pain-'+(i+1)})));
+  merge(noteKey,pastNotes.map((x,i)=>({...x,id:'history-note-'+(i+1)})));
 }
 seedPastRecords();
 ['painDate','pilDate','ibDate','medDate'].forEach(id=>{const e=$('#'+id);if(e)e.value=today()});
@@ -159,8 +160,8 @@ $('#painArea').onchange=e=>$('#painAreaOther').style.display=e.target.value==='�
 $('#painType').onchange=e=>$('#painTypeOther').style.display=e.target.value==='기타'?'block':'none';
 $('#savePain').onclick=()=>{let a=get('moong_pain',[]);a.push({date:$('#painDate').value||today(),area:$('#painArea').value==='기타'?$('#painAreaOther').value:$('#painArea').value,type:$('#painType').value==='기타'?$('#painTypeOther').value:$('#painType').value,score:+$('#painScore').value,note:$('#painNote').value.trim()});set('moong_pain',a);$('#painNote').value='';render()};
 $('#savePil').onclick=()=>{let a=get('moong_pilates',[]);a.push({date:$('#pilDate').value||today(),move:$('#pilMove').value.trim(),cue:$('#pilCue').value.trim(),note:$('#pilNote').value.trim()});set('moong_pilates',a);$('#pilMove').value='';$('#pilCue').value='';$('#pilNote').value='';render()};
-function renderPain(){let a=get('moong_pain',[]);$('#painCount').textContent=a.length+'회';$('#painList').innerHTML=a.slice().reverse().map(x=>'<div class="listitem"><b>'+x.date+' · '+x.area+' · '+x.score+'/10</b><br><span class="pill">'+x.type+'</span><br><span class="note">'+(x.note||'메모 없음')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
-function renderPil(){let a=get('moong_pilates',[]);$('#pilCount').textContent=a.length+'회';$('#pilList').innerHTML=a.slice().reverse().map(x=>'<div class="listitem"><b>'+x.date+' · '+(x.move||'수업')</b><br><span class="note">큐: '+(x.cue||'-')+'<br>메모: '+(x.note||'-')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
+function renderPain(){let a=get('moong_pain',[]);$('#painCount').textContent=a.length+'회';$('#painList').innerHTML=a.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))).map(x=>'<div class="listitem"><b>'+x.date+' · '+x.area+' · '+(x.score==null?'강도 미기록':x.score+'/10')+'</b><br><span class="pill">'+x.type+'</span><br><span class="note">'+(x.note||'메모 없음')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
+function renderPil(){let a=get('moong_pilates',[]);$('#pilCount').textContent=a.length+'회';$('#pilList').innerHTML=a.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))).map(x=>'<div class="listitem"><b>'+x.date+' · '+(x.move||'수업')+'</b><br><span class="note">큐: '+(x.cue||'-')+'<br>메모: '+(x.note||'-')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
 function renderMeds(){let a=get('moong_meds',[]);$('#medList').innerHTML=a.slice().reverse().map((m,i)=>{const idx=a.length-1-i;return '<div class="listitem"><b>'+m.name+'</b> · '+(m.date||'-')+' · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+idx+'" '+(m.taken?'checked':'')+'> 복용 완료</label> <button class="btn secondary del" data-i="'+idx+'">삭제</button></div>'}).join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});}
 $('#addMed').onclick=()=>{let n=$('#medName').value.trim();if(!n)return;let a=get('moong_meds',[]);a.push({name:n,date:$('#medDate').value||today(),time:$('#medTime').value,taken:false});set('moong_meds',a);$('#medName').value='';render()};
 function renderV3(){
