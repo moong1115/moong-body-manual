@@ -166,7 +166,10 @@
 function showTab(id){
   document.querySelectorAll('.nav .subnav button').forEach(function(b){b.classList.toggle('active',b.dataset.tab===id)});
   document.querySelectorAll('.section').forEach(function(s){s.classList.toggle('active',s.id===id)});
-  document.querySelectorAll('.navGroup').forEach(function(g){g.classList.toggle('hasActive',!!g.querySelector('.subnav button[data-tab="'+id+'"]'))});
+  document.querySelectorAll('.navGroup').forEach(function(g){
+    g.classList.toggle('hasActive',!!g.querySelector('.subnav button[data-tab="'+id+'"]'));
+    g.classList.remove('open');
+  });
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.navGroup .groupBtn').forEach(function(b){
