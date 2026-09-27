@@ -111,6 +111,9 @@ document.querySelectorAll('.nav .subnav button').forEach(function(b){
 showTab('home');
 </script><script>
 const $=s=>document.querySelector(s),today=()=>new Date().toISOString().slice(0,10),get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+function deletedRecordIds(){const ids=get('moong_deleted_records',[]);return new Set(Array.isArray(ids)?ids.filter(id=>typeof id==='string'):[])}
+function makeRecordId(){return 'record-'+(window.crypto&&typeof window.crypto.randomUUID==='function'?window.crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2))}
+function escapeRecordText(value){return String(value??'').replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
 function seedPastRecords(){
   // 지금까지 대화에서 정리된 과거 몸 기록을 기존 localStorage에 "추가 병합"합니다.
   // 기존 사용자가 입력한 기록은 삭제/덮어쓰기하지 않습니다.
@@ -145,12 +148,11 @@ function seedPastRecords(){
   // 과거 기록은 화면에서도 항상 보이도록 별도 보관하고, 기존 localStorage에도 병합합니다.
   window.MOONG_HISTORY={pil:pastPil.map((x,i)=>({...x,id:'history-pil-'+(i+1)})),pain:pastPain.map((x,i)=>({...x,id:'history-pain-'+(i+1)})),notes:pastNotes.map((x,i)=>({...x,id:'history-note-'+(i+1)}))};
   const merge=(key,items)=>{
-    // 기존 브라우저 저장값이 배열이 아니거나 깨져 있어도 과거 기록 복구가 중단되지 않도록 처리
     const stored=get(key,[]);
-    const current=Array.isArray(stored)?stored:[];
-    const sig=x=>x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score]);
-    const seen=new Set(current.map(sig));
-    items.forEach(x=>{if(!seen.has(x.id)){current.push(x);seen.add(x.id)}});
+    const deleted=deletedRecordIds();
+    const current=(Array.isArray(stored)?stored:[]).filter(x=>x&&typeof x==='object'&&!deleted.has(x.id));
+    const seen=new Set(current.map(x=>x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score])));
+    items.forEach(x=>{if(!deleted.has(x.id)&&!seen.has(x.id)){current.push(x);seen.add(x.id)}});
     set(key,current);
   };
   merge(pilKey,pastPil.map((x,i)=>({...x,id:'history-pil-'+(i+1)})));
@@ -166,11 +168,113 @@ $('#saveIb').onclick=()=>{let a=get('moong_inbody',[]);a.push({date:$('#ibDate')
 $('#painScore').oninput=e=>$('#painValue').textContent=e.target.value;
 $('#painArea').onchange=e=>$('#painAreaOther').style.display=e.target.value==='기타'?'block':'none';
 $('#painType').onchange=e=>$('#painTypeOther').style.display=e.target.value==='기타'?'block':'none';
-$('#savePain').onclick=()=>{let a=get('moong_pain',[]);a.push({date:$('#painDate').value||today(),area:$('#painArea').value==='기타'?$('#painAreaOther').value:$('#painArea').value,type:$('#painType').value==='기타'?$('#painTypeOther').value:$('#painType').value,score:+$('#painScore').value,note:$('#painNote').value.trim()});set('moong_pain',a);$('#painNote').value='';render()};
-$('#savePil').onclick=()=>{let a=get('moong_pilates',[]);a.push({date:$('#pilDate').value||today(),move:$('#pilMove').value.trim(),cue:$('#pilCue').value.trim(),note:$('#pilNote').value.trim()});set('moong_pilates',a);$('#pilMove').value='';$('#pilCue').value='';$('#pilNote').value='';render()};
-function historyMerge(key,history){const stored=get(key,[]);const a=Array.isArray(stored)?stored.slice():[];const seen=new Set(a.map(x=>x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score])));(history||[]).forEach(x=>{const sig=x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score]);if(!seen.has(sig)){a.push(x);seen.add(sig)}});return a}
-function renderPain(){let a=historyMerge('moong_pain',window.MOONG_HISTORY?.pain);$('#painCount').textContent=a.length+'회';$('#painList').innerHTML=a.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))).map(x=>'<div class="listitem"><b>'+x.date+' · '+x.area+' · '+(x.score==null?'강도 미기록':x.score+'/10')+'</b><br><span class="pill">'+x.type+'</span><br><span class="note">'+(x.note||'메모 없음')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
-function renderPil(){let a=historyMerge('moong_pilates',window.MOONG_HISTORY?.pil);$('#pilCount').textContent=a.length+'회';$('#pilList').innerHTML=a.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))).map(x=>'<div class="listitem"><b>'+x.date+' · '+(x.move||'수업')+'</b><br><span class="note">큐: '+(x.cue||'-')+'<br>메모: '+(x.note||'-')+'</span></div>').join('')||'<span class="note">기록이 없습니다.</span>'}
+$('#savePain').onclick=()=>{let a=get('moong_pain',[]);if(!Array.isArray(a))a=[];a.push({id:makeRecordId(),date:$('#painDate').value||today(),area:$('#painArea').value==='기타'?$('#painAreaOther').value:$('#painArea').value,type:$('#painType').value==='기타'?$('#painTypeOther').value:$('#painType').value,score:+$('#painScore').value,note:$('#painNote').value.trim()});set('moong_pain',a);$('#painNote').value='';render()};
+$('#savePil').onclick=()=>{let a=get('moong_pilates',[]);if(!Array.isArray(a))a=[];a.push({id:makeRecordId(),date:$('#pilDate').value||today(),move:$('#pilMove').value.trim(),cue:$('#pilCue').value.trim(),note:$('#pilNote').value.trim()});set('moong_pilates',a);$('#pilMove').value='';$('#pilCue').value='';$('#pilNote').value='';render()};
+function historyMerge(key,history){
+  const stored=get(key,[]);
+  const original=Array.isArray(stored)?stored:[];
+  let changed=original.length!==(Array.isArray(stored)?stored.length:0);
+  const deleted=deletedRecordIds();
+  const records=original.filter(x=>x&&typeof x==='object');
+  if(records.length!==original.length)changed=true;
+  records.forEach(x=>{if(!x.id){x.id=makeRecordId();changed=true}});
+  const a=records.filter(x=>!deleted.has(x.id));
+  if(a.length!==records.length)changed=true;
+  const seen=new Set(a.map(x=>x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score])));
+  (history||[]).forEach(x=>{
+    if(!x||typeof x!=='object'||deleted.has(x.id))return;
+    const sig=x.id||JSON.stringify([x.date,x.title,x.text,x.move,x.cue,x.note,x.area,x.type,x.score]);
+    if(!seen.has(sig)){a.push(x);seen.add(sig)}
+  });
+  if(changed)set(key,a);
+  return a;
+}
+let editingRecord=null;
+function recordActionButtons(kind,id){
+  const safeId=escapeRecordText(id);
+  return '<div class="row recordActions"><button type="button" class="btn secondary" data-record-action="edit" data-kind="'+kind+'" data-id="'+safeId+'">수정</button><button type="button" class="btn secondary" data-record-action="delete" data-kind="'+kind+'" data-id="'+safeId+'">삭제</button></div>';
+}
+function renderPainEditor(x){
+  const id=escapeRecordText(x.id);
+  return '<div class="listitem"><div class="form recordEditor" data-record-editor>'+
+    '<label>날짜<input type="date" data-edit-field="date" value="'+escapeRecordText(x.date||'')+'"></label>'+
+    '<label>부위<input type="text" data-edit-field="area" value="'+escapeRecordText(x.area||'')+'"></label>'+
+    '<label>통증 종류<input type="text" data-edit-field="type" value="'+escapeRecordText(x.type||'')+'"></label>'+
+    '<label>강도 (0–10)<input type="number" min="0" max="10" step="any" data-edit-field="score" value="'+(x.score==null?'':escapeRecordText(x.score))+'"></label>'+
+    '<label>메모<textarea data-edit-field="note">'+escapeRecordText(x.note||'')+'</textarea></label>'+
+    '<div class="row"><button type="button" class="btn" data-record-action="save" data-kind="pain" data-id="'+id+'">저장</button><button type="button" class="btn secondary" data-record-action="cancel" data-kind="pain" data-id="'+id+'">취소</button></div>'+
+    '</div></div>';
+}
+function renderPilEditor(x){
+  const id=escapeRecordText(x.id);
+  return '<div class="listitem"><div class="form recordEditor" data-record-editor>'+
+    '<label>날짜<input type="date" data-edit-field="date" value="'+escapeRecordText(x.date||'')+'"></label>'+
+    '<label>동작 / 수업<input type="text" data-edit-field="move" value="'+escapeRecordText(x.move||'')+'"></label>'+
+    '<label>선생님 큐 / 핸즈온<input type="text" data-edit-field="cue" value="'+escapeRecordText(x.cue||'')+'"></label>'+
+    '<label>느낌 / 메모<textarea data-edit-field="note">'+escapeRecordText(x.note||'')+'</textarea></label>'+
+    '<div class="row"><button type="button" class="btn" data-record-action="save" data-kind="pil" data-id="'+id+'">저장</button><button type="button" class="btn secondary" data-record-action="cancel" data-kind="pil" data-id="'+id+'">취소</button></div>'+
+    '</div></div>';
+}
+function renderPainItem(x){
+  if(editingRecord&&editingRecord.kind==='pain'&&editingRecord.id===x.id)return renderPainEditor(x);
+  return '<div class="listitem"><b>'+escapeRecordText(x.date||'날짜 미기록')+' · '+escapeRecordText(x.area||'부위 미기록')+' · '+(x.score==null?'강도 미기록':escapeRecordText(x.score)+'/10')+'</b><br><span class="pill">'+escapeRecordText(x.type||'종류 미기록')+'</span><br><span class="note">'+escapeRecordText(x.note||'메모 없음')+'</span>'+recordActionButtons('pain',x.id)+'</div>';
+}
+function renderPilItem(x){
+  if(editingRecord&&editingRecord.kind==='pil'&&editingRecord.id===x.id)return renderPilEditor(x);
+  return '<div class="listitem"><b>'+escapeRecordText(x.date||'날짜 미기록')+' · '+escapeRecordText(x.move||'수업')+'</b><br><span class="note">큐: '+escapeRecordText(x.cue||'-')+'<br>메모: '+escapeRecordText(x.note||'-')+'</span>'+recordActionButtons('pil',x.id)+'</div>';
+}
+function renderPain(){
+  const a=historyMerge('moong_pain',window.MOONG_HISTORY?.pain);
+  $('#painCount').textContent=a.length+'회';
+  $('#painList').innerHTML=a.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))).map(renderPainItem).join('')||'<span class="note">기록이 없습니다.</span>';
+}
+function renderPil(){
+  const a=historyMerge('moong_pilates',window.MOONG_HISTORY?.pil);
+  $('#pilCount').textContent=a.length+'회';
+  $('#pilList').innerHTML=a.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))).map(renderPilItem).join('')||'<span class="note">기록이 없습니다.</span>';
+}
+function recordStore(kind){return kind==='pain'?{key:'moong_pain',history:window.MOONG_HISTORY?.pain,label:'통증'}:kind==='pil'?{key:'moong_pilates',history:window.MOONG_HISTORY?.pil,label:'필라테스'}:null}
+function handleRecordAction(event){
+  const button=event.target.closest('[data-record-action]');
+  if(!button)return;
+  const action=button.dataset.recordAction,kind=button.dataset.kind,id=button.dataset.id,store=recordStore(kind);
+  if(!store)return;
+  if(action==='edit'){editingRecord={kind,id};render();return}
+  if(action==='cancel'){editingRecord=null;render();return}
+  if(action==='delete'){
+    const records=historyMerge(store.key,store.history);
+    if(!records.some(x=>x.id===id))return;
+    if(!window.confirm('이 '+store.label+' 기록을 삭제할까요? 삭제하면 되돌릴 수 없습니다.'))return;
+    const stored=get(store.key,[]),remaining=(Array.isArray(stored)?stored:[]).filter(x=>x&&x.id!==id);
+    set(store.key,remaining);
+    const deleted=deletedRecordIds();deleted.add(id);set('moong_deleted_records',Array.from(deleted));
+    editingRecord=null;render();return;
+  }
+  if(action!=='save')return;
+  const editor=button.closest('[data-record-editor]');
+  if(!editor)return;
+  const value=field=>editor.querySelector('[data-edit-field="'+field+'"]').value.trim();
+  const date=value('date');
+  if(!date){window.alert('날짜를 입력해 주세요.');return}
+  const original=historyMerge(store.key,store.history).find(x=>x.id===id);
+  if(!original)return;
+  let updated;
+  if(kind==='pain'){
+    const area=value('area'),type=value('type'),rawScore=value('score');
+    if(!area||!type){window.alert('부위와 통증 종류를 입력해 주세요.');return}
+    let score=null;
+    if(rawScore!==''){score=Number(rawScore);if(!Number.isFinite(score)||score<0||score>10){window.alert('강도는 0에서 10 사이로 입력해 주세요.');return}}
+    updated={...original,date,area,type,score,note:value('note')};
+  }else{
+    updated={...original,date,move:value('move'),cue:value('cue'),note:value('note')};
+  }
+  const stored=get(store.key,[]),records=Array.isArray(stored)?stored.filter(x=>x&&typeof x==='object'):[];
+  const index=records.findIndex(x=>x.id===id);
+  if(index>=0)records[index]=updated;else records.push(updated);
+  set(store.key,records);
+  const deleted=deletedRecordIds();deleted.delete(id);set('moong_deleted_records',Array.from(deleted));
+  editingRecord=null;render();
+}
 function renderMeds(){let a=get('moong_meds',[]);$('#medList').innerHTML=a.slice().reverse().map((m,i)=>{const idx=a.length-1-i;return '<div class="listitem"><b>'+m.name+'</b> · '+(m.date||'-')+' · '+(m.time||'시간 미지정')+' <label><input type="checkbox" data-i="'+idx+'" '+(m.taken?'checked':'')+'> 복용 완료</label> <button class="btn secondary del" data-i="'+idx+'">삭제</button></div>'}).join('')||'<span class="note">등록된 약이 없습니다.</span>';document.querySelectorAll('#medList input').forEach(e=>e.onchange=()=>{let x=get('moong_meds',[]);x[+e.dataset.i].taken=e.checked;set('moong_meds',x);render()});document.querySelectorAll('.del').forEach(e=>e.onclick=()=>{let x=get('moong_meds',[]);x.splice(+e.dataset.i,1);set('moong_meds',x);render()});}
 $('#addMed').onclick=()=>{let n=$('#medName').value.trim();if(!n)return;let a=get('moong_meds',[]);a.push({name:n,date:$('#medDate').value||today(),time:$('#medTime').value,taken:false});set('moong_meds',a);$('#medName').value='';render()};
 function renderV3(){
@@ -292,5 +396,8 @@ function renderStats(){
   $('#statsNext').innerHTML=next.length?next.map(x=>'• '+x).join('<br>'):'현재 기록을 유지하며 날짜별 변화를 관찰하기';
 }
 
-function render(){renderPain();renderPil();renderMeds();drawIb();renderV3();renderBodyNotes();renderStats();renderCalendar()}render();
+function render(){renderPain();renderPil();renderMeds();drawIb();renderV3();renderBodyNotes();renderStats();renderCalendar()}
+$('#painList').addEventListener('click',handleRecordAction);
+$('#pilList').addEventListener('click',handleRecordAction);
+render();
 </script></body></html>
